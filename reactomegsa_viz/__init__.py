@@ -1,0 +1,1 @@
+from .html_report_generator import HtmlReportGenerator

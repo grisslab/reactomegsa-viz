@@ -1,0 +1,1701 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>ReactomeGSA Analysis Report</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <!-- Plotly -->
+    <script src="https://cdn.plot.ly/plotly-3.0.1.min.js"></script>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
+    <!-- Tablesort -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tablesort/5.2.1/tablesort.min.js"></script>
+
+    <!-- colResizable for table column resize -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/colResizable/1.6/colResizable-1.6.min.js"></script>
+
+    <!-- Google fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #004d62;
+            --secondary-color: #008080;
+            --background-color: #f4f4f4;
+            --highlight-color: #e0f7fa;
+            --text-color: #333;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+
+        header {
+            background-color: var(--primary-color);
+            padding: 1.5rem;
+            text-align: center;
+            color: #fff;
+            position: sticky;
+            z-index: 1000;
+            top: 0;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2rem;
+        }
+
+        .px-3.pt-3 {
+            position: sticky;
+            top: 80px;
+            z-index: 1025;
+        }
+
+        /* Card style */
+        .card {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+        }
+
+        .card h2 {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            margin-top: 0;
+        }
+
+         /* Select Dataset box */
+        .dataset-selector-card {
+            position: relative;
+            overflow: hidden; 
+            background-color: #e1f0f4 !important; 
+            border: 1px solid #b2d8e1;
+            border-radius: 8px;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05); 
+        }
+
+        .dataset-selector-card h2 {
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .loader-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.7); 
+            display: none; /* Hidden by default */
+            align-items: center;
+            justify-content: center;
+            flex-direction: column; 
+            gap: 10px;
+            z-index: 10;
+        }
+
+        /* Custom loader text style */
+        .loader-text {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #008080; /* Match your custom color here */
+        }
+
+        .btn-dataset {
+            background-color: #ffffff; 
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .btn-dataset.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        /* Summary box */
+        .summary-box {
+            background-color: var(--highlight-color);
+            border-radius: 4px;
+            display: grid;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            padding: 1rem;
+        }
+
+        @media (min-width: 600px) {
+            .summary-box {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (min-width: 1020px) {
+            .summary-box {
+                grid-template-columns: 1fr 1fr 1fr 1fr;
+            }
+        }
+
+        .metric {
+            text-align: center;
+            margin: 0.5rem auto;
+            min-width: 120px;
+        }
+
+        .metric .value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .metric .label {
+            font-size: 1rem;
+            color: #666;
+        }
+
+        .highlight {
+            color: var(--secondary-color);
+        }
+
+        /* Plots */
+        .plot-container {
+            margin-bottom: 2rem;
+        }
+
+        .plot {
+            height: 100%;
+            min-height: 400px;
+            width: 100%;
+        }
+
+        /* Table styling */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table th {
+            background-color: var(--secondary-color) !important;
+            color: #fff !important;
+            cursor: pointer;
+            position: relative;
+        }
+
+        table th,
+        table td {
+            border-right: 1px solid #bbb;
+        }
+
+        table th:last-child,
+        table td:last-child {
+            border-right: none;
+        }
+
+        /* Sticky header */
+        thead th {
+            position: sticky;
+            top: 0;
+            background-color: #fff;
+            z-index: 3;
+        }
+
+        td:first-child {
+            position: sticky;
+            left: 0;
+            background-color: #fff;
+            z-index: 2;
+        }
+
+        th:first-child {
+            position: sticky;
+            left: 0;
+            background-color: var(--secondary-color);
+            color: #fff;
+            z-index: 2;
+        }
+
+        thead th:first-child {
+            z-index: 4;
+        }
+
+        /* Resizer for columns */
+        .resizer {
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 6px;
+            height: 100%;
+            cursor: col-resize;
+            user-select: none;
+            background: transparent;
+            z-index: 10;
+        }
+
+        .resizer:hover,
+        .resizing .resizer {
+            background: var(--secondary-color, #008080);
+            opacity: 0.4;
+            border-radius: 2px;
+        }
+
+        /* Scrollable table container */
+        .table-wrapper {
+            overflow-x: auto;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+
+        .pathway-table-wrapper {
+            max-height: 600px;
+        }
+
+        .gene-table-wrapper {
+            max-height: 400px;
+        }
+
+        /* Triangles for sorting */
+        .sort-triangles {
+            display: inline-flex;
+            flex-direction: column;
+            margin-left: 6px;
+            vertical-align: middle;
+        }
+
+        .triangle-up,
+        .triangle-down {
+            font-size: 0.9em;
+            cursor: pointer;
+            line-height: 0.8em;
+            color: #fff;
+            background: transparent;
+            border: none;
+            border-radius: 50%;
+            padding: 0;
+            margin: 1px 0;
+            display: inline;
+            min-width: 0;
+            min-height: 0;
+            transition: color 0.2s, text-shadow 0.2s;
+        }
+
+        .triangle-up:hover,
+        .triangle-down:hover {
+            color: #004d62;
+            background: transparent;
+        }
+
+        /* Info bubbles */
+        .info-bubble {
+            background-color: #fafafa;
+            border-left: 5px solid var(--secondary-color);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 4px;
+        }
+
+        .info-bubble h3 {
+            margin-top: 0;
+            font-size: 1rem;
+            color: var(--secondary-color);
+        }
+
+        /* Button styling */
+        .btn-custom {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            font-weight: 600;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-custom:hover {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        /* Sidebar Design */
+        #customSidebar {
+            font-family: 'Roboto', sans-serif;
+            font-size: 0.95rem;
+        }
+
+        .sidebar-dataset-link.active {
+            color: var(--primary-color);
+        }
+
+        /* Sidebar Buttons */
+        .btn-block-dark {
+            display: block;
+            width: 100%;
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: bold;
+            text-align: center;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: none;
+            border-radius: 0;
+            text-decoration: none;
+        }
+
+        .btn-block-dark:hover {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .offcanvas {
+            background-color: var(--highlight-color);
+            z-index: 1050;
+        }
+
+        footer {
+            background: transparent;
+            color: var(--primary-color);
+            width: 100%;
+            min-height: 50px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            padding: 20px;
+            bottom: 0;
+        }
+
+        .logo-container {
+            flex-shrink: 0;
+        }
+
+        .logo-container svg {
+            width: 100px;
+            height: auto;
+        }
+
+        
+    </style>
+</head>
+
+<body>
+    <!-- HEADER -->
+    <header>
+        <h1>ReactomeGSA Analysis Report</h1>
+    </header>
+
+    <!-- Sidebar Toggle Button -->
+    <div class="px-3 pt-3">
+        <button class="btn" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidePane" aria-controls="sidePane"
+            style="background-color: var(--primary-color); color: white; border: none; border-radius: 6px;">
+            <i class="bi bi-list fs-4"></i>
+        </button>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="sidePane" aria-labelledby="sidePaneLabel">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="sidePaneLabel"><i class="bi bi-graph-up"></i> Report Summary</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body">
+            <p><strong>Reactome Version:</strong> <span id="ReactomeVersion">-</span></p>
+            <p><strong>Date:</strong> <span id="sideDate">-</span></p>
+            <hr>
+            {% for link in reactome_links %}
+            <a href="{{ link['url'] }}" id="btnReactome" target="_blank" class="btn-block-dark">Open {{ link['name'] }}</a>
+            {% endfor %}
+            <a href="#" class="btn-block-dark" id="downloadRScriptBtn">Open R Code</a>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="container">
+
+        <!-- DATASET SELECT BOX -->
+        <div class="card p-4 dataset-selector-card">
+            <div id="selectorLoader" class="loader-overlay">
+                <div class="spinner-border" style="color: #008080;" role="status"></div>
+                <span class="loader-text">Loading Dataset...</span>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h2 class="mb-0">Select Dataset</h2>
+                </div>
+            </div>
+            
+            <div id="datasetButtonsContainer" class="d-flex flex-wrap gap-2"></div>
+        </div>
+
+        <div id="standardViewSection">
+            <!-- SUMMARY CARD -->
+            <div class="card p-4">
+                <h2>Pathway Count Summary</h2>
+                <div class="summary-box flex-wrap flex-lg-nowrap">
+                    <div class="metric">
+                        <div class="value highlight" id="totalPathways">0</div>
+                        <div class="label">
+                            Total
+                            <i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-placement="bottom"
+                                title="Total number of pathways analyzed in this dataset."></i>
+                        </div>
+                    </div>
+                    <div class="metric">
+                        <div class="value highlight" id="significantCount">0</div>
+                        <div class="label">
+                            Significant (p ≤ 0.05)
+                            <i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-placement="bottom"
+                                title="Number of pathways with significant enrichment (FDR ≤ 0.05)."></i>
+                        </div>
+                    </div>
+                    <div class="metric">
+                        <div class="value highlight" id="upCount">0</div>
+                        <div class="label">
+                            Upregulated
+                            <i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-placement="bottom"
+                                title="Number of pathways indicating increased activity."></i>
+                        </div>
+                    </div>
+                    <div class="metric">
+                        <div class="value highlight" id="downCount">0</div>
+                        <div class="label">
+                            Downregulated
+                            <i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-placement="bottom"
+                                title="Number of pathways indicating decreased activity."></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TOP PROCESSES & GENES -->
+            <div class="card p-4">
+                <h2>Most Significant Pathways</h2>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="info-bubble mb-3">
+                            <h3>Top 5 Pathways</h3>
+                            <div class="table-wrapper rounded overflow-hidden border">
+                                <table class="table table-sm table-bordered mb-0">
+                                    <colgroup>
+                                        <col style="width: auto;">
+                                        <col style="width: 80px;">
+                                    </colgroup>
+                                    <thead>
+                                        <tr>
+                                            <th>Pathway Name</th>
+                                            <th>FDR</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="topProcessesList"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-bubble mb-3">
+                            <h3>Top 5 Upregulated Pathways</h3>
+                            <div class="table-wrapper rounded overflow-hidden border">
+                                <table class="table table-sm table-bordered mb-0">
+                                    <colgroup>
+                                        <col style="width: auto;">
+                                        <col style="width: 80px;">
+                                    </colgroup>
+                                    <thead>
+                                        <tr>
+                                            <th>Pathway Name</th>
+                                            <th>FDR</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="topUpPathwaysTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-bubble mb-3">
+                            <h3>Top 5 Downregulated Pathways</h3>
+                            <div class="table-wrapper rounded overflow-hidden border">
+                                <table class="table table-sm table-bordered mb-0">
+                                    <colgroup>
+                                        <col style="width: auto;">
+                                        <col style="width: 80px;">
+                                    </colgroup>
+                                    <thead>
+                                        <tr>
+                                            <th>Pathway Name</th>
+                                            <th>FDR</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="topDownPathwaysTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PLOTS -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card mb-4 p-4">
+                        <h2>Bar Plot</h2>
+                        The horizontal bar plot displays the top 20 enriched pathways ranked by statistical
+                        significance. Each bar represents a pathway, with the length indicating the -log10 of the
+                        adjusted p-value, which reflects the confidence in pathway enrichment. Longer bars imply
+                        higher statistical significance.
+                        <div id="barPlot" class="plot"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="card mb-4 p-4">
+                        <h2>Bubble Plot</h2>
+                        <h6>Top 20 significant pathways - Average Log2 Fold Change</h6>
+                        <p>
+                            This plot shows the the 20 pathways with the lowest adjusted P values, with the <strong>Average Log2 Fold Change</strong> 
+                            on the x-axis. The size of each bubble reflects the number of genes associated with the pathway, 
+                            while the color indicates the direction of regulation: red for upregulated and blue for downregulated 
+                            pathways.
+                        </p>
+                        <div id="bubblePlotFC" class="plot"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="card mb-4 p-4">
+                        <h2>Bubble Plot</h2>
+                        <h6>Top 20 Average Log Fold Change pathways (FDR < 0.05)</h6>
+                            <p>
+                                This plot displays the 20 pathways with the <strong>highest changes average expression</strong> 
+                                that also meet the significance threshold (<strong>FDR < 0.05</strong>). The size of each bubble 
+                                reflects the number of genes associated with the pathway, while the color indicates the direction of
+                                regulation: red for upregulated and blue for downregulated pathways.
+                            </p>
+                        <div id="bubblePlotAvrgFC" class="plot"></div>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card mb-4 p-4">
+                        <h2>Pathway Volcano Plot</h2>
+                        <p>
+                            The volcano plot visualizes all pathways in terms of their average log2 fold change
+                            (log2FC) and statistical significance.
+                            The x-axis shows log2FC, indicating the direction and magnitude of regulation, while the
+                            y-axis shows -log10 of the adjusted p-value.
+                            Each dot represents a pathway:
+                        </p>
+                        <ul>
+                            <li><strong>Red</strong>: Significantly upregulated pathways (FDR ≤ 0.05 and log2FC > 0)
+                            </li>
+                            <li><strong>Blue</strong>: Significantly downregulated pathways (FDR ≤ 0.05 and log2FC <
+                                    0)</li>
+                            <li><strong>Gray</strong>: Pathways not meeting the significance threshold</li>
+                        </ul>
+                        <div id="heatmap" class="plot"></div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card mb-4 p-4">
+                        <h2>Gene Volcano Plot</h2>
+                        <p>
+                            The volcano plot visualizes all genes in terms of their log2 fold change (log2FC) and
+                            statistical significance.
+                            The x-axis shows log2FC, indicating the direction and magnitude of regulation, while
+                            the y-axis shows -log10 of the adjusted p-value.
+                            Each dot represents a gene:
+                        </p>
+                        <ul>
+                            <li><strong>Red</strong>: Significantly upregulated genes (FDR ≤ 0.05 and
+                                log2FC > 1)</li>
+                            <li><strong>Blue</strong>: Significantly downregulated genes (FDR ≤ 0.05 and
+                                log2FC < -1)</li>
+                            <li><strong>Gray</strong>: Genes not meeting the significance threshold
+                            </li>
+                        </ul>
+                        <div id="volcanoPlot" class="plot"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PATHWAY TABLE -->
+            <div class="card mb-4 p-4">
+                <h2>Pathway Table</h2>
+                <p>Summary of all analyzed pathways along with relevant statistics:</p>
+                <ul>
+                    <li><strong>Pathway ID</strong>: Reactome identifier for the pathway</li>
+                    <li><strong>Pathway Name</strong>: Descriptive title of the biological process</li>
+                    <li><strong>Regulation</strong>: Indicates whether the pathway is upregulated or downregulated</li>
+                    <li><strong>Adj. p-value</strong>: False discovery rate–adjusted p-value representing statistical
+                        significance</li>
+                    <li><strong>-Log10 (Adj. p-value)</strong>: Transformed adjusted p-value to highlight significance
+                        levels</li>
+                    <li><strong>AvgFC</strong>: Average log2 fold change of genes within the pathway</li>
+                    <li><strong>NGenes</strong>: Number of genes associated with the pathway</li>
+                </ul>
+                <p>
+                    The table supports interactive exploration: each column can be sorted by clicking the triangle
+                    icons next to its header, and columns are resizable by dragging the vertical edge of the header. You
+                    can filter the displayed pathways using the checkboxes above the table (e.g., by regulation
+                    direction or significance), or search for specific names or values in real-time using the search
+                    bar.
+                    The table contents can also be downloaded as a CSV file.
+                </p>
+
+                <!-- Search input -->
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <input id="pathwaySearch" type="text" class="form-control me-3" placeholder="Search pathways…"
+                        style="max-width: 500px;">
+                    <a download="pathways.csv" class="btn btn-custom btn-sm" id="csvDownloadLink">Download CSV</a>
+                </div>
+
+                <!-- Filter Buttons -->
+                <div class="d-flex flex-wrap gap-2 mb-3" id="pathwayFilters">
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="filterUp">
+                        <label class="form-check-label" for="filterUp">Up-regulated</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="filterDown">
+                        <label class="form-check-label" for="filterDown">Down-regulated</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="filterSig">
+                        <label class="form-check-label" for="filterSig">Significant (FDR ≤ 0.05)</label>
+                    </div>
+
+                    <div class="ms-auto">
+                        <button class="btn btn-outline-secondary btn-sm" onclick="resetPathwayFilters()">Reset
+                            Filters</button>
+                    </div>
+                </div>
+
+                <!-- Scrollable table wrapper -->
+                <div class="table-wrapper pathway-table-wrapper">
+                    <table class=" table table-striped mb-3 tablesort" id="pathwayTable">
+                        <thead>
+                            <tr>
+                                <th>Plot <span class="resizer"></span></th>
+                                <th>Pathway ID
+                                    <span class="sort-triangles">
+                                        <span class="triangle-up" data-sort="asc">&#9650;</span>
+                                        <span class="triangle-down" data-sort="desc">&#9660;</span>
+                                    </span>
+                                    <span class="resizer"></span>
+                                </th>
+                                <th>Pathway Name
+                                    <span class="sort-triangles">
+                                        <span class="triangle-up" data-sort="asc">&#9650;</span>
+                                        <span class="triangle-down" data-sort="desc">&#9660;</span>
+                                    </span>
+                                    <span class="resizer"></span>
+                                </th>
+                                <th>Regulation
+                                    <span class="sort-triangles">
+                                        <span class="triangle-up" data-sort="asc">&#9650;</span>
+                                        <span class="triangle-down" data-sort="desc">&#9660;</span>
+                                    </span>
+                                    <span class="resizer"></span>
+                                </th>
+                                <th data-sort-method="number">Adj. p-value
+                                    <span class="sort-triangles">
+                                        <span class="triangle-up" data-sort="asc">&#9650;</span>
+                                        <span class="triangle-down" data-sort="desc">&#9660;</span>
+                                    </span>
+                                    <span class="resizer"></span>
+                                </th>
+                                <th data-sort-method="number">-Log10 (Adj. p-value)
+                                    <span class="sort-triangles">
+                                        <span class="triangle-up" data-sort="asc">&#9650;</span>
+                                        <span class="triangle-down" data-sort="desc">&#9660;</span>
+                                    </span>
+                                    <span class="resizer"></span>
+                                </th>
+                                <th data-sort-method="number">AvgFC
+                                    <span class="sort-triangles">
+                                        <span class="triangle-up" data-sort="asc">&#9650;</span>
+                                        <span class="triangle-down" data-sort="desc">&#9660;</span>
+                                    </span>
+                                    <span class="resizer"></span>
+                                </th>
+                                <th data-sort-method="number">NGenes
+                                    <span class="sort-triangles">
+                                        <span class="triangle-up" data-sort="asc">&#9650;</span>
+                                        <span class="triangle-down" data-sort="desc">&#9660;</span>
+                                    </span>
+                                    <span class="resizer"></span>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="pathwayTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card p-4" id="selectionPlotCard">
+                <h2>Custom Selection Bubble Plot</h2>
+                <p class="text-muted">Select pathways from the table above to compare them in this plot.</p>
+                <div id="selectionBubblePlot" class="plot" style="display: none; min-height: 400px;"></div>
+                <div id="noSelectionMessage" class="text-center p-5 border rounded bg-light">
+                    <i class="bi bi-cursor-fill fs-2 text-muted"></i>
+                    <p>No pathways selected. Check the "Plot" box in the table above to add data here.</p>
+                </div>
+            </div>
+
+            <!-- GENE EXPRESSION TABLE -->
+            <div class="card p-4 mb-1">
+                <h2>Gene Expression Table</h2>
+                <p>Summary of gene-level statistics from the differential expression analysis:</p>
+                <ul>
+                    <li><strong>Identifier</strong>: Affymetrix probe set ID</li>
+                    <li><strong>Log2FC</strong>: Log2-transformed fold change in gene expression between conditions
+                    </li>
+                    <li><strong>Avg Expr</strong>: Average expression level across all samples</li>
+                    <li><strong>t-value</strong>: t-statistic for differential expression testing</li>
+                    <li><strong>p-value</strong>: Raw p-value representing statistical significance</li>
+                    <li><strong>Adj. p-value</strong>: False discovery rate–adjusted p-value to control for multiple
+                        testing</li>
+                    <li><strong>-Log10 (Adj. p-value)</strong>: Transformed adjusted p-value to highlight significance
+                        levels</li>
+                    <li><strong>B-value</strong>: Log-odds that the gene is differentially expressed</li>
+                </ul>
+                <p>
+                    The table supports interactive exploration: columns can be sorted by clicking the triangle
+                    icons in the headers, and you can resize them by dragging the vertical edges. Use the search bar
+                    above the table to filter genes by identifier or values in real-time. The table
+                    contents can also be downloaded as a CSV file.
+                </p>
+
+                <!-- Search input -->
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <input id="geneSearch" type="text" class="form-control me-3" placeholder="Search genes…"
+                        style="max-width: 500px;">
+                    <a download="gene_expression.csv" class="btn btn-custom btn-sm" id="geneCsvDownloadLink">Download
+                        CSV</a>
+                </div>
+
+                <!-- Scrollable table wrapper -->
+                <div class="table-wrapper gene-table-wrapper">
+                    <table class="table table-striped mb-3 tablesort" id="geneTable">
+                        <thead>
+                            <tr>
+                                <th>Identifier
+                                    <span class="sort-triangles">
+                                        <span class="triangle-up" data-sort="asc">&#9650;</span>
+                                        <span class="triangle-down" data-sort="desc">&#9660;</span>
+                                    </span>
+                                    <span class="resizer"></span>
+                                </th>
+                                <th data-sort-method="number">Log2FC
+                                    <span class="sort-triangles">
+                                        <span class="triangle-up" data-sort="asc">&#9650;</span>
+                                        <span class="triangle-down" data-sort="desc">&#9660;</span>
+                                    </span>
+                                    <span class="resizer"></span>
+                                </th>
+                                <th data-sort-method="number">Avg Expr
+                                    <span class="sort-triangles">
+                                        <span class="triangle-up" data-sort="asc">&#9650;</span>
+                                        <span class="triangle-down" data-sort="desc">&#9660;</span>
+                                    </span>
+                                    <span class="resizer"></span>
+                                </th>
+                                <th data-sort-method="number">t-value
+                                    <span class="sort-triangles">
+                                        <span class="triangle-up" data-sort="asc">&#9650;</span>
+                                        <span class="triangle-down" data-sort="desc">&#9660;</span>
+                                    </span>
+                                    <span class="resizer"></span>
+                                </th>
+                                <th data-sort-method="number">p-value
+                                    <span class="sort-triangles">
+                                        <span class="triangle-up" data-sort="asc">&#9650;</span>
+                                        <span class="triangle-down" data-sort="desc">&#9660;</span>
+                                    </span>
+                                    <span class="resizer"></span>
+                                </th>
+                                <th data-sort-method="number">Adj. p-value
+                                    <span class="sort-triangles">
+                                        <span class="triangle-up" data-sort="asc">&#9650;</span>
+                                        <span class="triangle-down" data-sort="desc">&#9660;</span>
+                                    </span>
+                                    <span class="resizer"></span>
+                                </th>
+                                <th data-sort-method="number">-Log10 (Adj. p-value)
+                                    <span class="sort-triangles">
+                                        <span class="triangle-up" data-sort="asc">&#9650;</span>
+                                        <span class="triangle-down" data-sort="desc">&#9660;</span>
+                                    </span>
+                                    <span class="resizer"></span>
+                                </th>
+                                <th data-sort-method="number">B-value
+                                    <span class="sort-triangles">
+                                        <span class="triangle-up" data-sort="asc">&#9650;</span>
+                                        <span class="triangle-down" data-sort="desc">&#9660;</span>
+                                    </span>
+                                    <span class="resizer"></span>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="geneTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="PathwaycomparisonViewSection" style="display: none;">
+            <div class="card p-4">
+                <h2>Compare Pathways Across Datasets</h2>
+                <p class="text-muted">Select pathways to see expression changes across every dataset.</p>
+                <input id="comparisonSearch" type="text" class="form-control mb-3" placeholder="Search pathways...">
+                <div class="table-wrapper" style="max-height: 400px;">
+                    <table class="table table-sm table-hover" id="comparisonSelectorTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 50px;">Plot</th>
+                                <th>Pathway Name</th>
+                                <th>ID</th>
+                            </tr>
+                        </thead>
+                        <tbody id="comparisonSelectorBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card p-4" id="crossDatasetSection" style="display: none;">
+                <div id="crossDatasetBubblePlot" class="plot"></div>
+                <div id="crossDatasetHeatmap" class="mb-5"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="logo-container" title="Reactome Icon">
+            {{ logo_svg | safe }}
+        </div>
+        <span id="footerDate"></span>
+    </footer>
+
+    <!-- JINJA2 TEMPLATE INJECTION -->
+    <script>
+        window.datasets = {{ datasets | tojson }};
+        window.reactome_version = {{ reactome_version | tojson }};
+        window.dataset_ids = {{ dataset_ids | tojson }};
+        window.currentDatasetId = {{ initial_dataset_id | tojson }};
+        window.tokenScript = {{ r_script_template | tojson }};
+
+
+        /* ====== DATASET SELECTOR ====== */
+        function renderDatasetSelector() {
+            let container = document.getElementById('datasetButtonsContainer');
+            if (!container) return;
+            container.innerHTML = "";
+
+            // Render individual Dataset Buttons
+            window.dataset_ids.forEach(id => {
+                const btn = document.createElement("button");
+                btn.className = `btn btn-dataset ${id === window.currentDatasetId ? 'active' : ''}`;
+                btn.innerHTML = `<i class="bi bi-database"></i> ${id}`;
+                
+                btn.onclick = function () {
+                    const loader = document.getElementById('selectorLoader');
+                    if (loader) loader.style.display = 'flex';
+
+                    setTimeout(() => {
+                        window.currentDatasetId = id;
+                        renderAll();
+                        renderDatasetSelector(); 
+                        if (loader) loader.style.display = 'none';
+                    }, 50); 
+                };
+                container.appendChild(btn);
+            });
+
+            // Compare Pathways Across Datasets button
+            const compBtn = document.createElement("button");
+            compBtn.className = `btn btn-dataset ${window.currentDatasetId === 'COMPARISON_VIEW' ? 'active' : ''}`;
+            compBtn.innerHTML = `<i class="bi bi-arrow-left-right"></i> Compare Pathways Across Datasets`;
+            
+            compBtn.onclick = function() {
+                const loader = document.getElementById('selectorLoader');
+                if (loader) loader.style.display = 'flex';
+                
+                setTimeout(() => {
+                    window.currentDatasetId = 'COMPARISON_VIEW';
+                    renderAll();
+                    renderDatasetSelector();
+                    if (loader) loader.style.display = 'none';
+                }, 50);
+            };
+            container.appendChild(compBtn);
+        }
+
+         /* ====== PATHWAY TABLE RENDER ====== */
+        function renderPathwayTable(data, tableBodyId) {
+            const tbody = document.getElementById(tableBodyId);
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            data.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.pathway_name || item.name || '-'}</td>
+                    <td>${item.fdr != null ? item.fdr.toExponential(2) : (item.p != null ? item.p.toExponential(2) : '-')}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        /* ====== CUSTOM BUBBLE PLOT RENDER ====== */
+        function renderSelectionPlot() {
+            const selectedData = [];
+            const checks = document.querySelectorAll('.plot-selector-check:checked');
+            const plotDiv = document.getElementById('selectionBubblePlot');
+            const msgDiv = document.getElementById('noSelectionMessage');
+
+            checks.forEach(cb => {
+                const row = cb.closest('tr');
+                selectedData.push(JSON.parse(row.dataset.pathwayData));
+            });
+
+            if (selectedData.length === 0) {
+                plotDiv.style.display = 'none';
+                msgDiv.style.display = 'block';
+                return;
+            }
+
+            plotDiv.style.display = 'block';
+            msgDiv.style.display = 'none';
+
+            // Dynamic plot height based on number of pathways selected
+            // 30px per selected pathway + 120px for title and axis labels
+            const dynamicHeight = Math.max(400, (selectedData.length * 30) + 120);
+
+            // Limit the number of pathways to size the bubbles to 150
+            const cappedSelectionSizes = selectedData.map(d => Math.min(d.ngenes || 1, 150));
+
+            let trace = {
+                x: selectedData.map(d => d.av_foldchange || 0),
+                y: selectedData.map(d => d.pathway_name),
+                mode: 'markers',
+                marker: {
+                    size: cappedSelectionSizes,
+                    sizemode: 'area',
+                    sizeref: 2.0 * 150 / (40**2), // size reference is 150 n pathways in a 40px diameter
+                    color: selectedData.map(d => d.direction === 'Up' ? 'red' : 'blue'),
+                    opacity: 0.8
+                },
+                text: selectedData.map(d => `FDR: ${d.fdr?.toExponential(2)}<br>NGenes: ${d.ngenes}`),
+                hovertemplate: '<b>%{y}</b><br>%{text}<br>Avg Log2FC: %{x:.2f}<extra></extra>'
+            };
+
+            let layout = {
+                title: 'Comparison of Selected Pathways',
+                height: dynamicHeight,
+                xaxis: { 
+                    title: { 
+                        text: 'Average Log2 Fold Change',
+                        font: { size: 14, color: '#333' } 
+                    },
+                    zeroline: true,
+                    zerolinecolor: '#969696',
+                    zerolinewidth: 2
+                },
+                yaxis: { 
+                    automargin: true, 
+                    tickfont: { size: 10 } 
+                },
+                margin: { t: 50, l: 200, r: 50, b: 80 }
+            };
+
+            Plotly.newPlot('selectionBubblePlot', [trace], layout, { responsive: true });
+        }
+
+        /* ====== COMPARE PATHWAYS ACROSS DATASETS TABLE ====== */
+        function renderComparisonTable() {
+            const tbody = document.getElementById('comparisonSelectorBody');
+            if (tbody.children.length > 0) return; // Don't re-render if already built
+
+            const allPathwaysMap = new Map();
+            window.dataset_ids.forEach(id => {
+                window.datasets[id].pathways.forEach(p => {
+                    allPathwaysMap.set(p.pathway_id, p.pathway_name);
+                });
+            });
+
+            allPathwaysMap.forEach((name, id) => {
+                const row = document.createElement('tr');
+                row.dataset.pathwayId = id;
+                row.dataset.pathwayName = name;
+                row.innerHTML = `
+                    <td><input type="checkbox" class="multi-compare-check" onchange="renderMultiCrossDatasetPlot()"></td>
+                    <td>${name}</td>
+                    <td><small class="text-muted">${id}</small></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+
+        /* ====== COMPARE PATHWAYS ACROSS DATASETS BUBBLE PLOT AND HEATMAP ====== */
+        function renderMultiCrossDatasetPlot() {
+            const comparisonData = [];
+            const section = document.getElementById('crossDatasetSection');
+            const checkedRows = document.querySelectorAll('.multi-compare-check:checked');
+
+            if (checkedRows.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+
+            const selectedPathways = Array.from(checkedRows).map(cb => {
+                const row = cb.closest('tr');
+                return { id: row.dataset.pathwayId, name: row.dataset.pathwayName };
+            });
+
+            window.dataset_ids.forEach(dsId => {
+                const dsPathways = window.datasets[dsId].pathways;
+                selectedPathways.forEach(selected => {
+                    const match = dsPathways.find(p => p.pathway_id === selected.id);
+                    if (match) {
+                        comparisonData.push({
+                            ...match,
+                            pathway_name_clean: selected.name,
+                            yLabel: `<b>${dsId}</b> | ${selected.name}`
+                        });
+                    }
+                });
+            });
+
+            // ====== BUBBLE PLOT ======
+            // Sort by pathway name to group datasets together
+            comparisonData.sort((a, b) => a.pathway_name_clean.localeCompare(b.pathway_name_clean));
+
+            section.style.display = 'block';
+
+            // Dynamic plot height based on number of pathways selected
+            // 30px per selected pathway + 150px for title and axis labels
+            const calculatedHeight = Math.max(400, (comparisonData.length * 30) + 150);
+
+            // Limit the number of pathways to size the bubbles to 150
+            const cappedSizes = comparisonData.map(d => Math.min(d.ngenes || 1, 150));
+            const maxCappedSize = Math.max(...cappedSizes);
+
+            let trace = {
+                x: comparisonData.map(d => d.av_foldchange || 0),
+                y: comparisonData.map(d => d.yLabel),
+                mode: 'markers',
+                marker: {
+                    size: cappedSizes, // Use the capped array
+                    sizemode: 'area',
+                    sizeref: 2.0 * maxCappedSize / (40**2),
+                    color: comparisonData.map(d => d.direction === 'Up' ? 'red' : 'blue'),
+                    opacity: 0.8
+                },
+                text: comparisonData.map(d => `FDR: ${d.fdr?.toExponential(2)}<br>NGenes: ${d.ngenes}`),
+                hovertemplate: '<b>%{y}</b><br>%{text}<br>Avg Log2FC: %{x:.2f}<extra></extra>'
+            };
+
+            let layout = {
+                title: `Cross-Dataset Comparison (Selected Pathways: ${selectedPathways.length})`,
+                height: calculatedHeight, // <--- Apply the dynamic height here
+                xaxis: { title: { text: 'Average Log2 Fold Change' }, zeroline: true },
+                yaxis: { 
+                    automargin: true, 
+                    tickfont: { size: 11 },
+                    type: 'category',
+                    autorange: 'reversed' 
+                },
+                margin: { t: 80, l: 350, r: 50, b: 80 }
+            };
+
+            Plotly.newPlot('crossDatasetBubblePlot', [trace], layout, { responsive: true });
+
+            // ====== HEATMAP ======
+            const datasetIds = window.dataset_ids;
+            const zMatrix = [];
+            const yLabels = selectedPathways.map(p => p.name);
+            const xLabels = datasetIds;
+
+            selectedPathways.forEach(pathway => {
+                const rowValues = [];
+                datasetIds.forEach(dsId => {
+                    const match = window.datasets[dsId].pathways.find(p => p.pathway_id === pathway.id);
+                    // If data does not exist for that dataset set it to 0
+                    rowValues.push(match ? match.av_foldchange : 0);
+                });
+                zMatrix.push(rowValues);
+            });
+
+            // Dynamic height: 30px per row + margin
+            const dynamicHeight = Math.max(400, (selectedPathways.length * 35) + 150);
+
+            // ====== RENDER HEATMAP ======
+            const heatmapTrace = {
+                z: zMatrix,
+                x: xLabels,
+                y: yLabels,
+                type: 'heatmap',
+                colorscale: [
+                    [0, 'blue'],      
+                    [0.5, 'white'],  
+                    [1, 'red']  
+                ],
+                zmid: 0,
+                colorbar: { title: 'Avg Log2FC', titleside: 'right' },
+                hovertemplate: 'Dataset: %{x}<br>Pathway: %{y}<br>Log2FC: %{z:.2f}<extra></extra>'
+            };
+
+            const heatmapLayout = {
+                title: 'Heatmap: Fold Change Across Datasets',
+                height: dynamicHeight,
+                xaxis: { side: 'bottom', tickangle: -45 },
+                yaxis: { automargin: true, tickfont: { size: 10 } },
+                margin: { t: 80, l: 300, r: 50, b: 100 }
+            };
+
+            Plotly.newPlot('crossDatasetHeatmap', [heatmapTrace], heatmapLayout, { responsive: true });
+
+        }
+
+        /* ====== MAIN RENDER ====== */
+        function renderAll() {
+            const standardView = document.getElementById('standardViewSection');
+            const comparisonView = document.getElementById('PathwaycomparisonViewSection');
+
+            // Handle comparison across datasets view
+            if (window.currentDatasetId === 'COMPARISON_VIEW') {
+                standardView.style.display = 'none';
+                comparisonView.style.display = 'block';
+                renderComparisonTable(); 
+                return; // Exit here
+            }
+
+            // Handle standard one dataset view
+            standardView.style.display = 'block';
+            comparisonView.style.display = 'none';
+
+            const ds = window.datasets[window.currentDatasetId];
+            if (!ds) return;
+
+            const pathwayData = ds.pathways;
+            const geneData = ds.genes;
+            const topBioProcesses = pathwayData.slice().sort((a, b) => a.fdr - b.fdr).slice(0, 5);
+
+            /* ====== SUMMARY ====== */
+            document.getElementById('totalPathways').textContent = pathwayData.length;
+            document.getElementById('significantCount').textContent = pathwayData.filter(d => d.fdr <= 0.05).length;
+            document.getElementById('upCount').textContent = pathwayData.filter(d => d.direction === 'Up').length;
+            document.getElementById('downCount').textContent = pathwayData.filter(d => d.direction === 'Down').length;
+
+            /* ====== TOP PATHWAYS ====== */
+            renderPathwayTable(topBioProcesses, 'topProcessesList');
+
+            /* ====== Top upregulated pathways ====== */
+            const upregulatedPathways = pathwayData
+                .filter(p => p.direction === 'Up' && typeof p.fdr === 'number')
+                .sort((a, b) => a.fdr - b.fdr)
+                .slice(0, 5);
+            renderPathwayTable(upregulatedPathways, 'topUpPathwaysTableBody');
+
+            /* ====== Top downregulated pathways ====== */
+            const downregulatedPathways = pathwayData
+                .filter(p => p.direction === 'Down' && typeof p.fdr === 'number')
+                .sort((a, b) => a.fdr - b.fdr)
+                .slice(0, 5);
+            renderPathwayTable(downregulatedPathways, 'topDownPathwaysTableBody');
+
+            /* ====== Top 20 significant pathways ====== */
+            let top20_signif = pathwayData.slice().sort((a, b) => a.fdr - b.fdr).slice(0, 20);
+
+
+            function wrapLabel(label, maxLen) {
+                return label.replace(new RegExp("(.{1," + maxLen + "})(\\s|$)", "g"), "$1\n");
+            }
+
+            /* ====== BAR PLOT ====== */
+            let barTrace = {
+                x: top20_signif.map(d => d.neg_log10_adj_pval || 0),
+                y: top20_signif.map(d => wrapLabel(d.pathway_name || '', 55)),
+                type: 'bar',
+                orientation: 'h',
+                hovertemplate: '<b>%{y}</b><br>ID: %{customdata}<br>-Log10(adj. pval): %{x:.2f}<extra></extra>',
+                marker: { color: '#008080' },
+                customdata: top20_signif.map(d => d.pathway_id || '')
+            };
+            let barLayout = {
+                title: 'Top 20 Enriched Pathways',
+                xaxis: { title: { text: '-Log10(adj. p-value)' } },
+                yaxis: { tickfont: { size: 9 }, automargin: true },
+                margin: { t: 20, l: 10, r: 20, b: 40 },
+                hoverlabel: { align: 'left' }
+            };
+            Plotly.newPlot('barPlot', [barTrace], barLayout, { responsive: true });
+
+            // Transform the gene counts to increase the bubbles in pahways with low gene counts
+            // Cap the bubble size to 150 to avoid high overlap of bubbles
+            const transformGeneCount = (n) => Math.min(Math.sqrt(n || 1) * 10, 150);
+
+            /* ====== BUBBLE PLOT (TOP 20 SIGNIFICANT, X AXIS = FOLD CHANGE) ====== */
+            const cappedSignifSizes = top20_signif.map(d => transformGeneCount(d.ngenes));
+            
+            let bubbleTraceFC = {
+                x: top20_signif.map(d => d.av_foldchange || 0),
+                y: top20_signif.map(d => wrapLabel(d.pathway_name || '', 55)),
+                mode: 'markers',
+                marker: {
+                    size: cappedSignifSizes,
+                    sizemode: 'area',
+                    sizeref: 2.0 * 150 / (25**2), // size reference is 150 n pathways in a 25px diameter
+                    color: top20_signif.map(d => d.direction === 'Up' ? 'red' : (d.direction === 'Down' ? 'blue' : 'gray')),
+                    opacity: 0.7
+                },
+                text: top20_signif.map(d => 
+                    `<b>${d.pathway_name || ''}</b><br>ID: ${d.pathway_id || ''}<br>Direction: ${d.direction}<br>NGenes: ${d.ngenes}`),
+                hovertemplate: '%{text}<br>Avg Log2FC: %{x:.2f}<extra></extra>'
+            };
+
+            let bubbleLayoutFC = {
+                title: 'Top 20 Pathways: Fold Change vs Significance',
+                xaxis: { 
+                    title: { text: 'Average Log2 Fold Change' },
+                    zeroline: true,
+                    zerolinecolor: '#969696',
+                    zerolinewidth: 2
+                },
+                yaxis: { tickfont: { size: 9 }, automargin: true },
+                margin: { t: 40, l: 10, r: 20, b: 40 },
+                hoverlabel: { align: 'left' }
+            };
+            Plotly.newPlot('bubblePlotFC', [bubbleTraceFC], bubbleLayoutFC, { responsive: true });
+
+            /* ====== BUBBLE PLOT (TOP 20 AVERAGE FOLD CHANGE) ====== */
+            
+            let significantPathways = pathwayData.filter(p => p.fdr < 0.05);
+            let plotContainer = document.getElementById('bubblePlotMagnitude');
+
+            if (significantPathways.length === 0) { // If no pathways are significant
+                plotContainer.innerHTML = `
+                    <div class="d-flex align-items-center justify-content-center" style="height: 400px; background: #f8f9fa; border: 1px dashed #ccc; border-radius: 8px;">
+                        <div class="text-center">
+                            <i class="bi bi-exclamation-triangle fs-1 text-muted"></i>
+                            <p class="mt-2 text-muted">No significant pathways (FDR ≤ 0.05) found for this dataset.</p>
+                        </div>
+                    </div>`;
+            } else {
+                /* ====== Top 20 pathways by Average FC ====== */
+                let top20_avgFC = pathwayData.slice()
+                    .filter(p => p.fdr < 0.05) // Select only significant pathways
+                    .sort((a, b) => Math.abs(b.av_foldchange || 0) - Math.abs(a.av_foldchange || 0))
+                    .slice(0, 20);
+
+                const cappedTop20Sizes = top20_avgFC.map(d => transformGeneCount(d.ngenes));
+
+                let bubbleTraceAvrgFC = {
+                    x: top20_avgFC.map(d => d.av_foldchange || 0),
+                    y: top20_avgFC.map(d => wrapLabel(d.pathway_name || '', 55)),
+                    mode: 'markers',
+                    marker: {
+                        size: cappedTop20Sizes,
+                        sizemode: 'area',
+                        sizeref: 2.0 * 150 / (25**2), // size reference is 150 n pathways in a 25px diameter
+                        color: top20_avgFC.map(d => d.direction === 'Up' ? 'red' : (d.direction === 'Down' ? 'blue' : 'gray')),
+                        opacity: 0.7
+                    },
+                    text: top20_avgFC.map(d => 
+                        `<b>${d.pathway_name || ''}</b><br>FDR: ${d.fdr?.toExponential(2)}<br>NGenes: ${d.ngenes}`),
+                    hovertemplate: '%{text}<br>Avg Log2FC: %{x:.2f}<extra></extra>'
+                };
+
+                let bubbleLayoutAvrgFC = {
+                    title: 'Top 20 Pathways by Average Fold Change (FDR < 0.05)',
+                    xaxis: { 
+                        title: { text: 'Average Log2 Fold Change' },
+                        zeroline: true,
+                        zerolinecolor: '#969696',
+                        zerolinewidth: 2
+                    },
+                    yaxis: { 
+                        tickfont: { size: 9 }, 
+                        automargin: true,
+                        categoryorder: 'total ascending' // Keeps the largest bars/points organized
+                    },
+                    margin: { t: 40, l: 10, r: 20, b: 40 },
+                    hoverlabel: { align: 'left' }
+                };
+                Plotly.newPlot('bubblePlotAvrgFC', [bubbleTraceAvrgFC], bubbleLayoutAvrgFC, { responsive: true });
+            }
+
+            /* ====== PATHWAY VOLCANO PLOT ====== */
+            let volcanoPathwayTrace = {
+                x: pathwayData.map(p => p.av_foldchange || 0),
+                y: pathwayData.map(p => p.fdr ? -Math.log10(p.fdr) : 0),
+                mode: 'markers',
+                marker: {
+                    size: 8,
+                    opacity: 0.7,
+                    color: pathwayData.map(p => {
+                        if (p.fdr < 0.05 && p.av_foldchange > 0) return 'red';
+                        if (p.fdr < 0.05 && p.av_foldchange < 0) return 'blue';
+                        return 'gray';
+                    })
+                },
+                text: pathwayData.map(p => `${p.pathway_name}<br>ID: ${p.pathway_id}<br>Log2FC: ${(p.av_foldchange || 0).toFixed(2)}<br>adj p-val: ${(p.fdr || 1).toExponential(2)}`),
+                hovertemplate: '%{text}<extra></extra>',
+                type: 'scatter'
+            };
+            let volcanoPathwayLayout = {
+                title: 'Pathway Volcano Plot',
+                xaxis: { title: { text: 'Log2(Fold Change)' } },
+                yaxis: { title: { text: '-Log10(adj. p-value)' } },
+                margin: { t: 40, l: 70, r: 20, b: 40 },
+                hoverlabel: { align: 'left' }
+            };
+            Plotly.newPlot('heatmap', [volcanoPathwayTrace], volcanoPathwayLayout, { responsive: true });
+
+            /* ====== GENE VOLCANO PLOT ====== */
+            let volcanoTrace = {
+                x: geneData.map(g => g.log2FC || 0),
+                y: geneData.map(g => g.adj_p_value ? -Math.log10(g.adj_p_value) : 0),
+                mode: 'markers',
+                marker: {
+                    size: 5,
+                    opacity: 0.7,
+                    color: geneData.map(g => {
+                        const fc = g.log2FC || 0;
+                        const adjp = g.adj_p_value || 1;
+                        if (adjp < 0.05 && fc > 1) return 'red';
+                        if (adjp < 0.05 && fc < -1) return 'blue';
+                        return 'gray';
+                    })
+                },
+                text: geneData.map(g => `ID: ${g.Identifier}<br>Log2FC: ${(g.log2FC || 0).toFixed(2)}<br>adj p-val: ${(g.adj_p_value || 1).toExponential(2)}`),
+                hovertemplate: '%{text}<extra></extra>',
+                type: 'scatter'
+            };
+            let volcanoLayout = {
+                xaxis: { title: { text: 'Log2(Fold Change)' } },
+                yaxis: { title: { text: '-Log10(adj. p-value)' } },
+                margin: { t: 40, l: 70, r: 20, b: 40 },
+                hoverlabel: { align: 'left' }
+            };
+            Plotly.newPlot('volcanoPlot', [volcanoTrace], volcanoLayout, { responsive: true });
+
+            /* ====== PATHWAY TABLE ====== */
+            let sortedPathways = pathwayData.slice().sort((a, b) => a.fdr - b.fdr);
+            let pathTableBody = document.getElementById('pathwayTableBody');
+            pathTableBody.innerHTML = "";
+            sortedPathways.forEach(d => {
+                let row = document.createElement('tr');
+                // Store the data object on the row for easy retrieval
+                row.dataset.pathwayData = JSON.stringify(d); 
+                
+                row.innerHTML = `
+                    <td class="text-center">
+                        <input type="checkbox" class="plot-selector-check" style="transform: scale(1.2);">
+                    </td>
+                    <td>${d.pathway_id || ''}</td>
+                    <td>${d.pathway_name || ''}</td>
+                    <td>${d.direction || ''}</td>
+                    <td>${d.fdr?.toExponential?.(2) || ''}</td>
+                    <td>${d.neg_log10_adj_pval?.toFixed?.(2) || ''}</td>
+                    <td>${d.av_foldchange?.toFixed?.(2) || ''}</td>
+                    <td>${d.ngenes || ''}</td>
+                `;
+                pathTableBody.appendChild(row);
+            });
+
+            // Add listener for checkboxes
+            document.querySelectorAll('.plot-selector-check').forEach(check => {
+                check.addEventListener('change', renderSelectionPlot);
+            });
+
+
+
+            /* ====== Pathway search ====== */
+            const pathwaySearchInput = document.getElementById('pathwaySearch');
+            pathwaySearchInput.oninput = () => {
+                const query = pathwaySearchInput.value.toLowerCase();
+                const rows = document.querySelectorAll('#pathwayTableBody tr');
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    row.style.display = text.includes(query) ? '' : 'none';
+                });
+            };
+
+            /* ====== CSV download for pathways (Fix for commas in names) ====== */
+            // Define headers
+            const headers = ["pathway_id", "pathway_name", "direction", "fdr", "p_value", "ngenes", "av_foldchange", "neg_log10_adj_pval"];
+
+            // Function to solve issues with CSV null fields or fields containing commas, \n or ""
+            const escapeCSV = (val) => {
+                if (val === null || val === undefined) return '""';
+                let stringVal = String(val);
+                if (stringVal.includes(',') || stringVal.includes('\n') || stringVal.includes('"')) {
+                    stringVal = '"' + stringVal.replace(/"/g, '""') + '"';
+                }
+                return stringVal;
+            };
+
+            // Generate CSV string starting with headers
+            let csvData = "data:text/csv;charset=utf-8," + headers.join(',') + "\n";
+
+            sortedPathways.forEach(d => {
+                csvData += [
+                    escapeCSV(d.pathway_id),
+                    escapeCSV(d.pathway_name),
+                    escapeCSV(d.direction),
+                    escapeCSV(d.fdr),
+                    escapeCSV(d.p_value),
+                    escapeCSV(d.ngenes),
+                    escapeCSV(d.av_foldchange),
+                    escapeCSV(d.neg_log10_adj_pval)
+                ].join(',') + "\n";
+            });
+
+            let csvDownloadLink = document.getElementById('csvDownloadLink');
+            csvDownloadLink.href = encodeURI(csvData);
+
+            /* ====== Filter pathways ====== */
+            function applyPathwayFilters() {
+                const showUp = document.getElementById("filterUp").checked;
+                const showDown = document.getElementById("filterDown").checked;
+                const showSig = document.getElementById("filterSig").checked;
+                const rows = document.querySelectorAll("#pathwayTableBody tr");
+                const fdrCutoff = 0.05;
+
+                rows.forEach(row => {
+                    const direction = row.children[3].textContent.trim().toLowerCase();
+                    const fdr = parseFloat(row.children[4].textContent.trim());
+
+                    let directionMatch = false;
+                    if (!showUp && !showDown) {
+                        directionMatch = true; // no direction filter, show all
+                    } else if (showUp && direction === "up") {
+                        directionMatch = true;
+                    } else if (showDown && direction === "down") {
+                        directionMatch = true;
+                    }
+
+                    let sigMatch = !showSig || (!isNaN(fdr) && fdr <= fdrCutoff);
+
+                    row.style.display = (directionMatch && sigMatch) ? "" : "none";
+                });
+            }
+
+            document.querySelectorAll("#filterUp, #filterDown, #filterSig").forEach(input => {
+                input.onchange = applyPathwayFilters;
+            });
+            window.resetPathwayFilters = function () {
+                document.getElementById("filterUp").checked = false;
+                document.getElementById("filterDown").checked = false;
+                document.getElementById("filterSig").checked = false;
+                applyPathwayFilters();
+            };
+
+            
+
+            /* ====== GENE TABLE ====== */
+            let geneTableBody = document.getElementById('geneTableBody');
+            geneTableBody.innerHTML = "";
+            let sortedGenes = geneData.slice().sort((a, b) => a.adj_p_value - b.adj_p_value);
+            sortedGenes.forEach(g => {
+                let row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${g.Identifier || ''}</td>
+                    <td>${(g.log2FC || 0).toFixed(4)}</td>
+                    <td>${(g.AveExpr || 0).toFixed(4)}</td>
+                    <td>${(g.t || 0).toFixed(4)}</td>
+                    <td>${g.p_value?.toExponential?.(2) || ''}</td>
+                    <td>${g.adj_p_value?.toExponential?.(2) || ''}</td>
+                    <td>${g.neg_log10_adj_pval?.toFixed?.(2) || ''}</td>
+                    <td>${(g.B || 0).toFixed(4)}</td>
+                `;
+                geneTableBody.appendChild(row);
+            });
+
+            /* ====== Gene search ====== */
+            document.getElementById('geneSearch').oninput = function () {
+                let query = this.value.toLowerCase();
+                let rows = document.querySelectorAll('#geneTableBody tr');
+                rows.forEach(row => {
+                    let text = row.textContent.toLowerCase();
+                    row.style.display = text.includes(query) ? '' : 'none';
+                });
+            };
+
+            /* ====== CSV download for gene expression ====== */
+            let geneCsvData = "data:text/csv;charset=utf-8,Identifier,log2FC,AveExpr,t,p_value,adj_p_value,B,neg_log10_adj_pval\n";
+            sortedGenes.forEach(g => {
+                geneCsvData += [
+                    g.Identifier || '',
+                    (g.log2FC || 0).toFixed(4),
+                    (g.AveExpr || 0).toFixed(4),
+                    (g.t || 0).toFixed(4),
+                    g.p_value || '',
+                    g.adj_p_value || '',
+                    g.neg_log10_adj_pval || '',
+                    (g.B || 0).toFixed(4)
+                ].join(',') + "\n";
+            });
+            let geneCsvDownloadLink = document.getElementById('geneCsvDownloadLink');
+            geneCsvDownloadLink.href = encodeURI(geneCsvData);
+
+            document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) {
+                new bootstrap.Tooltip(el);
+            });
+        }
+
+        /* ====== Make table resizable ====== */
+        function makeTableResizable(tableId) {
+            const table = document.getElementById(tableId);
+            if (!table) return;
+            let pageX, curCol, nxtCol, curColWidth, nxtColWidth;
+            const ths = table.querySelectorAll("th");
+            ths.forEach(function (th, idx) {
+                const resizer = th.querySelector('.resizer');
+                if (!resizer) return;
+                resizer.addEventListener('mousedown', function (e) {
+                    curCol = th;
+                    nxtCol = th.nextElementSibling;
+                    pageX = e.pageX;
+                    curColWidth = curCol.offsetWidth;
+                    nxtColWidth = nxtCol ? nxtCol.offsetWidth : 0;
+
+                    document.body.classList.add('resizing');
+
+                    document.addEventListener('mousemove', mouseMoveHandler);
+                    document.addEventListener('mouseup', mouseUpHandler);
+                });
+
+                function mouseMoveHandler(e) {
+                    const diffX = e.pageX - pageX;
+                    if (nxtCol) {
+                        curCol.style.width = (curColWidth + diffX) + 'px';
+                        nxtCol.style.width = (nxtColWidth - diffX) + 'px';
+                    } else {
+                        curCol.style.width = (curColWidth + diffX) + 'px';
+                    }
+                }
+
+                function mouseUpHandler() {
+                    document.body.classList.remove('resizing');
+                    document.removeEventListener('mousemove', mouseMoveHandler);
+                    document.removeEventListener('mouseup', mouseUpHandler);
+                }
+            });
+        }
+
+        /* ====== Triangle sort handlers ====== */
+        function getTHIndex(th) {
+            return Array.prototype.indexOf.call(th.parentNode.children, th);
+        }
+
+        function sortTable(table, colIndex, ascending) {
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            rows.sort((a, b) => {
+                let aText = a.children[colIndex].innerText.trim();
+                let bText = b.children[colIndex].innerText.trim();
+                let aNum = parseFloat(aText.replace(/,/g, ''));
+                let bNum = parseFloat(bText.replace(/,/g, ''));
+                if (!isNaN(aNum) && !isNaN(bNum)) {
+                    return ascending ? aNum - bNum : bNum - aNum;
+                } else {
+                    return ascending
+                        ? aText.localeCompare(bText)
+                        : bText.localeCompare(aText);
+                }
+            });
+            rows.forEach(row => tbody.appendChild(row));
+        }
+
+        function addTriangleSortHandlers(tableId) {
+            const table = document.getElementById(tableId);
+            if (!table) return;
+            table.querySelectorAll('th .triangle-up, th .triangle-down').forEach(function (triangle) {
+                triangle.addEventListener('click', function (event) {
+                    event.stopPropagation(); // Don't sort on th click, only triangle click
+                    const th = triangle.closest('th');
+                    const colIndex = getTHIndex(th);
+                    const ascending = triangle.dataset.sort === "asc";
+                    sortTable(table, colIndex, ascending);
+                });
+            });
+        }
+
+        /* ====== ON LOAD ====== */
+        document.addEventListener('DOMContentLoaded', function () {
+
+            /* ====== R Script Download listener ====== */
+            document.getElementById('downloadRScriptBtn').addEventListener('click', function (e) {
+                e.preventDefault();
+                if (!window.tokenScript) { alert("R script not available!"); return; }
+                const blob = new Blob([window.tokenScript], { type: "text/x-r" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "ReactomeGSA_analysis_script.R";
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            });
+
+            /* ====== Across dataset pathway comparison listener ====== */
+            document.getElementById('comparisonSearch').addEventListener('input', function() {
+                const q = this.value.toLowerCase();
+                document.querySelectorAll('#comparisonSelectorBody tr').forEach(tr => {
+                    tr.style.display = tr.textContent.toLowerCase().includes(q) ? '' : 'none';
+                });
+            });
+
+            makeTableResizable('pathwayTable');
+            makeTableResizable('geneTable');
+            addTriangleSortHandlers('pathwayTable');
+            addTriangleSortHandlers('geneTable');
+
+            /* ====== Update date ====== */
+            const today = new Date();
+            const formattedDate = today.toISOString().split("T")[0];
+            document.querySelectorAll("#sideDate").forEach(span => span.textContent = formattedDate);
+            document.getElementById("footerDate").textContent = formattedDate;
+
+            /* ====== Reactome version ====== */
+            if (window.reactome_version) {
+                document.getElementById("ReactomeVersion").textContent = window.reactome_version;
+            }
+
+            /* ====== Render sidebar and main content ====== */
+            renderDatasetSelector();
+            renderAll();
+        });
+    </script>
+</body>
+
+</html>
