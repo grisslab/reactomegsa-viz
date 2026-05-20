@@ -2,6 +2,8 @@
 
 [![Python Version >= 3.6](https://img.shields.io/badge/python-3.6-blue.svg)](https://www.python.org/downloads/release/python-360)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Test Package](https://github.com/grisslab/reactomegsa-viz/actions/workflows/test.yaml/badge.svg?branch=main)](https://github.com/reactomegsa-viz/grein_loader/actions/workflows/test.yaml)
+[![PyPI version](https://badge.fury.io/py/reactomegsa-viz.svg)](https://badge.fury.io/py/reactomegsa-viz)
 
 **ReactomeGSA-Viz** is a specialized Python tool designed to transform raw JSON results from the [ReactomeGSA](https://reactome.org/gsa) service into professional, interactive HTML reports. 
 
