@@ -28,7 +28,7 @@ dependencies = [
 ]
 
 [project.urls]
-"Homepage" = "https://derma-bioinf-services.derma.meduniwien.ac.at/griss-lab-private/reactomegsa-viz"
+"Homepage" = "https://github.com/grisslab/reactomegsa-viz"
 
 [project.scripts]
 create_reactome_report = "reactomegsa_viz.cli:create_report"

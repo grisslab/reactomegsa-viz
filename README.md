@@ -19,9 +19,6 @@ This package simplifies the interpretation of Gene Set Analysis (GSA) by providi
 
 The package requires **Python 3.6 or higher**. 
 
-### Dependencies:
-- **Jinja2**: For HTML templating. Version >= 3.1.6
-
 ## Installation
 
 Install the package via pip:
@@ -48,19 +45,4 @@ HtmlReportGenerator.create_report(
     out_html="test_package.html", 
     r_script_token="R_SCRIPT_TOKEN"
 )
-```
-
-## Project Structure
-
-```
-reactomegsa-viz/
-├── reactomegsa_viz/       # Core package
-│   ├── assets/            # HTML templates and SVG logo
-│   ├── __init__.py        # Package exports
-│   └── html_report_generator.py # Main Class logic
-├── tests/                 # Sample data for testing
-├── pyproject.toml         # Build and dependency configuration
-├── test_create_report.py  # Test package script
-├── test_package.html      # Output resulting from test_create_report.py
-└── README.md
 ```
