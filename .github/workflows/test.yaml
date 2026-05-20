@@ -35,4 +35,4 @@ jobs:
           TEST_USER: ${{ secrets.TEST_USER }}
           TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
         run: |
-          cd src && python3 -m unittest discover -s ../tests
+          python3 -m unittest discover -s ./tests
