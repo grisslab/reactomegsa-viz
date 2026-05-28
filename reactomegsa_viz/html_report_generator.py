@@ -15,7 +15,7 @@ _LOGGER = logging.getLogger(__name__)
 class HtmlReportGenerator:
 
     @staticmethod
-    def create_report(json_dict: dict, r_script_token: str, out_html: str = None) -> str | None:
+    def create_report(json_dict: dict, r_script_token: str, out_html: str = None, reactome_url: str = "https://gsa.reactome.org") -> str | None:
         """Create a HTML report based on the passed ReactomeGSA result object.
 
         :param json_dict: The ReactoeGSA result object as a dict.
@@ -25,6 +25,8 @@ class HtmlReportGenerator:
         :param out_html: If set, the resulting HTML document will be written to the defined file, defaults to None
                          Note: Throws an exception in case the file exists.
         :type out_html: str, optional
+        :param reactome_url: If set, this path will be used to generated ReactomeGSA associated links.
+        :type reactome_url: str, optional
         :return: The HTML code as a string or None.
         :rtype: str | None
         
@@ -135,14 +137,14 @@ if (!require(ReactomeGSA)) {{
 library(ReactomeGSA)
 
 # Load the analysis result
-result <- get_reactome_analysis_result(analysis_id = "{token}", reactome_url = "https://gsa.reactome.org")
+result <- get_reactome_analysis_result(analysis_id = "{token}", reactome_url = "{reactome_url}")
 
 # Save the result
 saveRDS(result, file = "my_ReactomeGSA_result.rds")
 
 # Get the overview over all pathways
 all_pathways <- pathways(result)
-        """.format(token=r_script_token)
+        """.format(token=r_script_token, reactome_url=reactome_url)
 
         # -- Render Jinja2 template --
         env = Environment(

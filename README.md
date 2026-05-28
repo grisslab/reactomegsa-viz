@@ -45,6 +45,7 @@ with gzip.open("tests/results.json.gz", "rt") as f:
 HtmlReportGenerator.create_report(
     json_dict=data, 
     out_html="test_package.html", 
-    r_script_token="R_SCRIPT_TOKEN"
+    r_script_token="R_SCRIPT_TOKEN",
+    reactome_url="https://gsa.reactome.org"
 )
 ```
